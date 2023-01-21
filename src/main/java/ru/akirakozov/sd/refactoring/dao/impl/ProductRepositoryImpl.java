@@ -8,8 +8,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ProductRepositoryImpl implements ProductRepository {
+    private static final String CONNECTION_STRING = "jdbc:sqlite:test.db";
+
     public ProductRepositoryImpl() {
-        try (Connection c = DriverManager.getConnection("jdbc:sqlite:test.db")) {
+        try (Connection c = DriverManager.getConnection(CONNECTION_STRING)) {
             String sql = "CREATE TABLE IF NOT EXISTS PRODUCT" +
                     "(ID INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL," +
                     " NAME           TEXT    NOT NULL, " +
@@ -24,28 +26,8 @@ public class ProductRepositoryImpl implements ProductRepository {
     }
 
     @Override
-    public List<Product> findAll() throws SQLException {
-        try (Connection c = DriverManager.getConnection("jdbc:sqlite:test.db")) {
-            Statement stmt = c.createStatement();
-            ResultSet rs = stmt.executeQuery("SELECT * FROM PRODUCT");
-            List<Product> productList = new ArrayList<>();
-
-            while (rs.next()) {
-                String name = rs.getString("name");
-                long price = rs.getLong("price");
-                productList.add(new Product(name, price));
-            }
-            rs.close();
-            stmt.close();
-            return productList;
-        } catch (SQLException e) {
-            throw new RuntimeException("Exception while getting products from database: " + e.getMessage());
-        }
-    }
-
-    @Override
-    public void addProduct(Product product) throws SQLException {
-        try (Connection c = DriverManager.getConnection("jdbc:sqlite:test.db")) {
+    public void addProduct(Product product) {
+        try (Connection c = DriverManager.getConnection(CONNECTION_STRING)) {
             String sql = "INSERT INTO PRODUCT " +
                     "(NAME, PRICE) VALUES (\"" + product.getName() + "\"," + product.getPrice() + ")";
             Statement stmt = c.createStatement();
@@ -57,70 +39,64 @@ public class ProductRepositoryImpl implements ProductRepository {
     }
 
     @Override
-    public Product findProductWithMaxPrice() {
+    public List<Product> findAll() {
+        try {
+            return runQueryAndGetProductList("SELECT * FROM PRODUCT");
+        } catch (SQLException e) {
+            throw new RuntimeException("Exception while getting products from database: " + e.getMessage());
+        }
+    }
 
-        try (Connection c = DriverManager.getConnection("jdbc:sqlite:test.db")) {
+    private List<Product> runQueryAndGetProductList(String query) throws SQLException {
+        try (Connection c = DriverManager.getConnection(CONNECTION_STRING)) {
             Statement stmt = c.createStatement();
-            ResultSet rs = stmt.executeQuery("SELECT * FROM PRODUCT ORDER BY PRICE DESC LIMIT 1");
+            ResultSet rs = stmt.executeQuery(query);
+            List<Product> productList = new ArrayList<>();
 
-            Product productWithMaxPrice = null;
             while (rs.next()) {
                 String name = rs.getString("name");
                 long price = rs.getLong("price");
-                productWithMaxPrice = new Product(name, price);
+                productList.add(new Product(name, price));
             }
             rs.close();
             stmt.close();
-            return productWithMaxPrice;
+            return productList;
+        }
+    }
+
+    @Override
+    public Product findProductWithMaxPrice() {
+        try {
+            List<Product> resultList = runQueryAndGetProductList("SELECT * FROM PRODUCT ORDER BY PRICE DESC LIMIT 1");
+            return resultList.isEmpty() ? null : resultList.get(0);
         } catch (SQLException e) {
             throw new RuntimeException("Exception while executing query 'max': " + e.getMessage());
         }
     }
 
     @Override
-    public Product findProductWithMinPrice() throws SQLException {
-        try (Connection c = DriverManager.getConnection("jdbc:sqlite:test.db")) {
-            Statement stmt = c.createStatement();
-            ResultSet rs = stmt.executeQuery("SELECT * FROM PRODUCT ORDER BY PRICE LIMIT 1");
-
-            Product productWithMaxPrice = null;
-            while (rs.next()) {
-                String name = rs.getString("name");
-                long price = rs.getLong("price");
-                productWithMaxPrice = new Product(name, price);
-            }
-            rs.close();
-            stmt.close();
-            return productWithMaxPrice;
+    public Product findProductWithMinPrice() {
+        try {
+            List<Product> resultList = runQueryAndGetProductList("SELECT * FROM PRODUCT ORDER BY PRICE LIMIT 1");
+            return resultList.isEmpty() ? null : resultList.get(0);
         } catch (SQLException e) {
             throw new RuntimeException("Exception while executing query 'min': " + e.getMessage());
         }
     }
 
     @Override
-    public long getProductSum() throws SQLException {
-        try (Connection c = DriverManager.getConnection("jdbc:sqlite:test.db")) {
-            Statement stmt = c.createStatement();
-            ResultSet rs = stmt.executeQuery("SELECT SUM(price) FROM PRODUCT");
-            long result;
-            if (rs.next()) {
-                result = rs.getLong(1);
-            } else {
-                throw new SQLException("Query did not return result");
-            }
-            rs.close();
-            stmt.close();
-            return result;
+    public long getProductSum() {
+        try {
+            return runQueryAndGetLong("SELECT SUM(price) FROM PRODUCT");
         } catch (SQLException e) {
             throw new RuntimeException("Exception while executing query 'sum': " + e.getMessage());
         }
     }
 
-    @Override
-    public long getProductCount() throws SQLException {
-        try (Connection c = DriverManager.getConnection("jdbc:sqlite:test.db")) {
+    private long runQueryAndGetLong(String query) throws SQLException {
+        try (Connection c = DriverManager.getConnection(CONNECTION_STRING)) {
             Statement stmt = c.createStatement();
-            ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM PRODUCT");
+            ResultSet rs = stmt.executeQuery(query);
             long result;
             if (rs.next()) {
                 result = rs.getLong(1);
@@ -130,6 +106,13 @@ public class ProductRepositoryImpl implements ProductRepository {
             rs.close();
             stmt.close();
             return result;
+        }
+    }
+
+    @Override
+    public long getProductCount() {
+        try {
+            return runQueryAndGetLong("SELECT COUNT(*) FROM PRODUCT");
         } catch (SQLException e) {
             throw new RuntimeException("Exception while executing query 'count': " + e.getMessage());
         }
