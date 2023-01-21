@@ -16,4 +16,9 @@ public class Product {
         this.name = name;
         this.price = price;
     }
+
+    @Override
+    public String toString() {
+        return this.getName() + "\t" + this.getPrice() + "</br>";
+    }
 }

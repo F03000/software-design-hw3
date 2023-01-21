@@ -14,7 +14,7 @@ public interface ProductRepository {
 
     Product findProductWithMaxPrice() throws SQLException;
 
-    Long getProductSum() throws SQLException;
+    long getProductSum() throws SQLException;
 
-    Long getProductCount() throws SQLException;
+    long getProductCount() throws SQLException;
 }

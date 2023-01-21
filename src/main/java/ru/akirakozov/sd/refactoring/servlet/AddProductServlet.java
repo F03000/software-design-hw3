@@ -15,20 +15,20 @@ import java.sql.SQLException;
 public class AddProductServlet extends HttpServlet {
 
     private final ProductRepository productRepository;
+
     public AddProductServlet(ProductRepository productRepository) {
         this.productRepository = productRepository;
     }
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        String name = request.getParameter("name");
-        long price = Long.parseLong(request.getParameter("price"));
-        Product newProduct = new Product(name, price);
-
         try {
+            String name = request.getParameter("name");
+            long price = Long.parseLong(request.getParameter("price"));
+            Product newProduct = new Product(name, price);
             productRepository.addProduct(newProduct);
         } catch (SQLException e) {
-            throw new RuntimeException("Exception while getting product list from database: " + e.getMessage());
+            throw new RuntimeException(e);
         }
 
         response.setContentType("text/html");

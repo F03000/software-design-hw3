@@ -38,6 +38,8 @@ public class ProductRepositoryImpl implements ProductRepository {
             rs.close();
             stmt.close();
             return productList;
+        } catch (SQLException e) {
+            throw new RuntimeException("Exception while getting products from database: " + e.getMessage());
         }
     }
 
@@ -49,11 +51,13 @@ public class ProductRepositoryImpl implements ProductRepository {
             Statement stmt = c.createStatement();
             stmt.executeUpdate(sql);
             stmt.close();
+        } catch (SQLException e) {
+            throw new RuntimeException("Exception while getting product list from database: " + e.getMessage());
         }
     }
 
     @Override
-    public Product findProductWithMaxPrice() throws SQLException {
+    public Product findProductWithMaxPrice() {
 
         try (Connection c = DriverManager.getConnection("jdbc:sqlite:test.db")) {
             Statement stmt = c.createStatement();
@@ -68,6 +72,8 @@ public class ProductRepositoryImpl implements ProductRepository {
             rs.close();
             stmt.close();
             return productWithMaxPrice;
+        } catch (SQLException e) {
+            throw new RuntimeException("Exception while executing query 'max': " + e.getMessage());
         }
     }
 
@@ -86,36 +92,46 @@ public class ProductRepositoryImpl implements ProductRepository {
             rs.close();
             stmt.close();
             return productWithMaxPrice;
+        } catch (SQLException e) {
+            throw new RuntimeException("Exception while executing query 'min': " + e.getMessage());
         }
     }
 
     @Override
-    public Long getProductSum() throws SQLException {
+    public long getProductSum() throws SQLException {
         try (Connection c = DriverManager.getConnection("jdbc:sqlite:test.db")) {
             Statement stmt = c.createStatement();
             ResultSet rs = stmt.executeQuery("SELECT SUM(price) FROM PRODUCT");
-            Long result = null;
+            long result;
             if (rs.next()) {
                 result = rs.getLong(1);
+            } else {
+                throw new SQLException("Query did not return result");
             }
             rs.close();
             stmt.close();
             return result;
+        } catch (SQLException e) {
+            throw new RuntimeException("Exception while executing query 'sum': " + e.getMessage());
         }
     }
 
     @Override
-    public Long getProductCount() throws SQLException {
+    public long getProductCount() throws SQLException {
         try (Connection c = DriverManager.getConnection("jdbc:sqlite:test.db")) {
             Statement stmt = c.createStatement();
             ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM PRODUCT");
-            Long result = null;
+            long result;
             if (rs.next()) {
                 result = rs.getLong(1);
+            } else {
+                throw new SQLException("Query did not return result");
             }
             rs.close();
             stmt.close();
             return result;
+        } catch (SQLException e) {
+            throw new RuntimeException("Exception while executing query 'count': " + e.getMessage());
         }
     }
 }
